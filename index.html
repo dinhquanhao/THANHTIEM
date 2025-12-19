@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Magic Christmas - Final Clean</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -11,7 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000000; font-family: 'Segoe UI', sans-serif; }
+        /* Tối ưu CSS để giao diện co giãn */
+        body { margin: 0; overflow: hidden; background-color: #000000; font-family: 'Segoe UI', sans-serif; touch-action: none; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
         
         /* UI Center Vandiep */
@@ -23,9 +24,10 @@
         /* Guide text Vandiep */
         .guide { 
             color: rgba(255, 255, 255, 0.6); 
-            font-size: 13px; 
+            font-size: clamp(10px, 3vw, 13px); /* Co dãn chữ theo màn hình */
             margin-bottom: 20px; 
             text-shadow: 0 2px 4px black;
+            padding: 0 10px;
         }
 
         button {
@@ -36,13 +38,16 @@
             font-weight: 800; font-size: 16px;
             box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
             animation: pulse 1.5s infinite;
+            max-width: 80%; /* Không tràn màn hình điện thoại */
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         /* Camera Preview Vandiep */
         #camera-preview {
             position: absolute; top: 15px; right: 15px;
-            width: 120px; height: 90px;
+            width: clamp(80px, 20vw, 120px); /* Nhỏ lại trên mobile */
+            height: auto;
+            aspect-ratio: 4/3;
             border: 2px solid rgba(255,0,0,0.5); 
             transform: scaleX(-1); opacity: 0.6; border-radius: 8px;
         }
@@ -60,26 +65,23 @@
             font-style: italic;
         }
 
-        #error-log { display: none; position: absolute; top: 0; left: 0; color: red; background: rgba(0,0,0,0.8); z-index: 999; padding: 10px; }
+        #error-log { display: none; position: absolute; top: 0; left: 0; color: red; background: rgba(0,0,0,0.8); z-index: 999; padding: 10px; width: 100%; font-size: 10px; }
     </style>
 </head>
 <body>
     <div id="error-log"></div>
     
-    <!-- UI Vandiep -->
     <div id="ui-layer">
-        <!-- Vandiep -->
         <div class="guide">
             🖐 <b>Open:</b> Explode &nbsp;|&nbsp; 🫶 <b>Heart:</b> Love &nbsp;|&nbsp; ✊ <b>Fist:</b> Tree
         </div>
         <button id="btnStart" onclick="startSystem()">START MAGIC</button>
     </div>
 
-    <!-- Vandiep -->
     <div id="copyright">© by vandiep</div>
 
     <div id="canvas-container"></div>
-    <video class="input_video" style="display:none"></video>
+    <video class="input_video" playsinline muted autoplay style="display:none"></video>
     <canvas id="camera-preview"></canvas>
 
     <script>
@@ -186,7 +188,6 @@
             const phases = []; 
             
             for(let i=0; i<count; i++) {
-                // --- TREE Vandiep ---
                 const h = Math.random() * CONFIG.treeHeight; 
                 const y = h - CONFIG.treeHeight / 2;
                 let radiusRatio = (type === 'gold') ? Math.sqrt(Math.random()) : 0.9 + Math.random()*0.1;
@@ -195,7 +196,6 @@
                 const theta = Math.random() * Math.PI * 2;
                 pTreeTargets.push(r * Math.cos(theta), y, r * Math.sin(theta));
 
-                // --- EXPLODE Vandiep ---
                 const u = Math.random();
                 const v = Math.random();
                 const phi = Math.acos(2 * v - 1);
@@ -204,12 +204,11 @@
                 const rad = CONFIG.explodeRadius * Math.cbrt(Math.random()) * radMult;
                 pExplodeTargets.push(rad * Math.sin(phi) * Math.cos(lam), rad * Math.sin(phi) * Math.sin(lam), rad * Math.cos(phi));
 
-                // --- SOFT HEART Vandiep ---
                 const tHeart = Math.random() * Math.PI * 2;
                 let hx = 16 * Math.pow(Math.sin(tHeart), 3);
                 let hy = 13 * Math.cos(tHeart) - 5 * Math.cos(2*tHeart) - 2 * Math.cos(3*tHeart) - Math.cos(4*tHeart);
                 
-                const rFill = Math.pow(Math.random(), 0.3); // Soft fill Vandiep
+                const rFill = Math.pow(Math.random(), 0.3);
                 hx *= rFill; hy *= rFill;
                 let hz = (Math.random() - 0.5) * 8 * rFill; 
                 
@@ -221,7 +220,6 @@
                 const scaleH = 2.2;
                 pHeartTargets.push(hx * scaleH, hy * scaleH + 5, hz); 
 
-                // --- INIT Vandiep ---
                 pPositions.push(pTreeTargets[i*3], pTreeTargets[i*3+1], pTreeTargets[i*3+2]);
                 sizes.push(size);
                 phases.push(Math.random() * Math.PI * 2);
@@ -231,7 +229,6 @@
             geo.setAttribute('position', new THREE.Float32BufferAttribute(pPositions, 3));
             geo.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
             
-            // Init colors Vandiep
             const colors = new Float32Array(count * 3);
             const baseColor = new THREE.Color();
             if(type === 'gold') baseColor.setHex(0xFFD700);
@@ -283,7 +280,6 @@
         }
 
         function createDecorations() {
-            // MERRY CHRISTMAS Vandiep
             const canvas = document.createElement('canvas');
             canvas.width = 1024; canvas.height = 256;
             const ctx = canvas.getContext('2d');
@@ -297,7 +293,6 @@
             titleMesh.position.set(0, 50, 0);
             scene.add(titleMesh);
 
-            // STAR Vandiep
             const starCanvas = document.createElement('canvas');
             starCanvas.width = 128; starCanvas.height = 128;
             const sCtx = starCanvas.getContext('2d');
@@ -315,7 +310,6 @@
             starMesh.position.set(0, CONFIG.treeHeight/2 + 2, 0);
             scene.add(starMesh);
 
-            // I LOVE YOU TEXT Vandiep
             const loveCanvas = document.createElement('canvas');
             loveCanvas.width = 1024; loveCanvas.height = 256;
             const lCtx = loveCanvas.getContext('2d');
@@ -342,13 +336,11 @@
             const targetKey = (targetState === 'TREE') ? 'tree' : (targetState === 'HEART' ? 'heart' : 'explode');
             const targets = group.geometry.userData[(targetState === 'PHOTO') ? 'explode' : targetKey];
 
-            // 1. Vandiep
             for(let i=0; i<positions.length; i++) {
                 positions[i] += (targets[i] - positions[i]) * speed;
             }
             group.geometry.attributes.position.needsUpdate = true;
             
-            // 2. COLOR & SIZE Vandiep
             const count = positions.length / 3;
             
             if (targetState === 'TREE') {
@@ -358,10 +350,8 @@
                     sizes[i] = baseSize;
                     let brightness = 1.0;
                     if(type === 'red') {
-                        // RED
                         brightness = 0.5 + 0.5 * Math.sin(time * 3 + phases[i]);
                     } else if(type === 'gold') {
-                        // YELLOW
                         brightness = 0.8 + 0.4 * Math.sin(time * 10 + phases[i]);
                     }
                     colors[i*3]   = baseColor.r * brightness;
@@ -376,7 +366,6 @@
                 const beatScale = 1 + Math.abs(Math.sin(time * 3)) * 0.15;
                 group.scale.set(beatScale, beatScale, beatScale);
 
-                // Vandiep
                 for(let i=0; i<count; i++) {
                     colors[i*3] = baseColor.r; colors[i*3+1] = baseColor.g; colors[i*3+2] = baseColor.b;
                     if (i % 3 === 0) sizes[i] = baseSize;
@@ -386,11 +375,9 @@
                 group.geometry.attributes.size.needsUpdate = true;
 
             } else {
-                // EXPLODE
                 group.scale.set(1,1,1);
                 group.rotation.y += (handRotY - group.rotation.y) * 0.1;
 
-                // size, color
                 for(let i=0; i<count; i++) {
                     sizes[i] = baseSize;
                     let brightness = 1.0;
@@ -473,59 +460,87 @@
             renderer.render(scene, camera);
         }
 
-        function startSystem() {
-            document.getElementById('btnStart').style.display = 'none';
-            bgMusic.play().catch(e => console.log(e));
-            init3D();
-
+        // SỬA LỖI CAMERA CHO IPHONE (Safari/iOS)
+        async function startSystem() {
             const video = document.getElementsByClassName('input_video')[0];
             const canvas = document.getElementById('camera-preview');
             const ctx = canvas.getContext('2d');
-            
-            const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-            hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            const btn = document.getElementById('btnStart');
+            const errorLog = document.getElementById('error-log');
 
-            hands.onResults(results => {
-                ctx.clearRect(0,0,100,75); ctx.drawImage(results.image, 0, 0, 100, 75);
+            btn.style.display = 'none';
+            bgMusic.play().catch(e => console.log("Audio play failed", e));
+            init3D();
 
-                // --- Hand Logic  ---
-                if (results.multiHandLandmarks.length === 2) {
-                    const h1 = results.multiHandLandmarks[0]; const h2 = results.multiHandLandmarks[1];
-                    const distIndex = Math.hypot(h1[8].x - h2[8].x, h1[8].y - h2[8].y);
-                    const distThumb = Math.hypot(h1[4].x - h2[4].x, h1[4].y - h2[4].y);
-                    if (distIndex < 0.15 && distThumb < 0.15) {
-                        state = 'HEART'; return;
+            try {
+                // MediaPipe Hands
+                const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+                hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+                
+                hands.onResults(results => {
+                    // Vẽ lên canvas preview (lật ảnh cho tự nhiên)
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+                    // Logic nhận diện trái tim (2 tay)
+                    if (results.multiHandLandmarks.length === 2) {
+                        const h1 = results.multiHandLandmarks[0]; 
+                        const h2 = results.multiHandLandmarks[1];
+                        const distIndex = Math.hypot(h1[8].x - h2[8].x, h1[8].y - h2[8].y);
+                        const distThumb = Math.hypot(h1[4].x - h2[4].x, h1[4].y - h2[4].y);
+                        if (distIndex < 0.15 && distThumb < 0.15) {
+                            state = 'HEART'; return;
+                        }
                     }
-                }
 
-                if(results.multiHandLandmarks.length > 0) {
-                    const lm = results.multiHandLandmarks[0];
-                    handX = lm[9].x; 
-                    const tips = [8,12,16,20]; const wrist = lm[0];
-                    let openDist = 0; tips.forEach(i => openDist += Math.hypot(lm[i].x-wrist.x, lm[i].y-wrist.y));
-                    const avgDist = openDist / 4;
-                    const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
+                    // Logic cử chỉ 1 tay
+                    if(results.multiHandLandmarks.length > 0) {
+                        const lm = results.multiHandLandmarks[0];
+                        handX = lm[9].x; 
+                        const tips = [8,12,16,20]; 
+                        const wrist = lm[0];
+                        let openDist = 0; 
+                        tips.forEach(i => openDist += Math.hypot(lm[i].x-wrist.x, lm[i].y-wrist.y));
+                        const avgDist = openDist / 4;
+                        const pinchDist = Math.hypot(lm[4].x-lm[8].x, lm[4].y-lm[8].y);
 
-                    if (avgDist < 0.25) { 
-                        state = 'TREE'; 
-                    } else if (pinchDist < 0.05) {
-                        state = 'PHOTO'; 
+                        if (avgDist < 0.25) { 
+                            state = 'TREE'; 
+                        } else if (pinchDist < 0.05) {
+                            state = 'PHOTO'; 
+                        } else {
+                            state = 'EXPLODE'; 
+                        }
                     } else {
-                        state = 'EXPLODE'; 
+                        state = 'TREE'; 
                     }
-                } else {
-                    state = 'TREE'; 
-                }
-            });
+                });
 
-            const cameraUtils = new Camera(video, {
-                onFrame: async () => { await hands.send({image: video}); }, width: 320, height: 240
-            });
-            cameraUtils.start();
+                // Yêu cầu camera trực tiếp (Cần thiết cho iOS/Safari)
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: 320, height: 240 } 
+                });
+                video.srcObject = stream;
+                
+                const cameraUtils = new Camera(video, {
+                    onFrame: async () => { await hands.send({image: video}); }, 
+                    width: 320, height: 240
+                });
+                cameraUtils.start();
+
+            } catch (err) {
+                errorLog.style.display = 'block';
+                errorLog.innerText = "Lỗi Camera: " + err.message + "\nHãy dùng trình duyệt Safari và cấp quyền camera.";
+            }
         }
 
+        // Xử lý resize màn hình
         window.addEventListener('resize', () => {
-            if(camera) { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+            if(camera) { 
+                camera.aspect = window.innerWidth/window.innerHeight; 
+                camera.updateProjectionMatrix(); 
+                renderer.setSize(window.innerWidth, window.innerHeight); 
+            }
         });
     </script>
 </body>
